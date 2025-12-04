@@ -36,6 +36,7 @@ Backup_JohnDoe_20250101_153022\
 ├── Pictures\
 ├── OneDrive\
 │
+
 ├── BackupLog_20250101_153022.txt
 
 └── BackupReport_20250101_153022.pdf
