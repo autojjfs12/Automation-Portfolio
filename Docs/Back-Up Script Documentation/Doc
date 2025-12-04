@@ -1,0 +1,202 @@
+📘 AutomaticBackupScript.ps1 — Technical Documentation
+📄 Overview
+
+AutomaticBackupScript.ps1 is a PowerShell automation tool designed to safely extract and back up data from a user profile on a Windows device. The script runs unattended, identifies the appropriate profile, copies essential directories, generates detailed logs, and optionally produces an HTML/PDF report.
+
+This documentation describes the script’s internal logic, features, design decisions, and operational guidance.
+
+🎯 Purpose
+
+This script solves common IT operational challenges:
+Automating offboarding workstation data retrieval
+Standardizing backup processes across varying device states
+Reducing human error during manual file collection
+Providing structured, timestamped backup archives
+Creating audit-ready logs and reports
+It is ideal for automation engineering, IT asset recovery, IAM offboarding workflows, or endpoint management teams.
+
+⚙ Architecture & Workflow
+🔍 Step 1 — Identify Last Logged-In User
+
+The script attempts multiple registry queries to safely determine the most recent interactive user:
+
+HKLM:\...\Authentication\LogonUI\LastLoggedOnSAMUser
+HKLM:\...\Authentication\LogonUI\LastLoggedOnUser
+As fallback: Win32_ComputerSystem.UserName
+Once found, it resolves the user’s profile directory under C:\Users.
+
+📂 Step 2 — Build Backup Folder Structure
+
+A new folder is created using the format:
+
+<Username>_<yyyyMMdd_HHmmss>
+
+Example:
+
+JohnDoe_20250115_094233\
+
+If the network share is unreachable, the script automatically switches to:
+
+C:\ProgramData\UserBackup_Fallback
+
+📁 Step 3 — Select Directories to Back Up
+
+The script dynamically determines which folders exist:
+
+Desktop
+Documents
+Pictures
+OneDrive (auto-detected — works for personal & business tenants)
+Empty directories are skipped to reduce noise in the backup.
+
+📦 Step 4 — Index All Files Before Copying
+
+Instead of copying files one by one blindly, the script:
+
+Scans all selected directories
+Builds a collection of file & folder objects
+Groups them by root folder
+Calculates item counts for progress bars
+
+This enables:
+
+✔ multi-stage progress
+✔ accurate percent tracking
+✔ dry-run testing
+
+📤 Step 5 — Copy Files With Safe Error Handling
+
+For each item:
+
+Folders → created automatically
+
+Files → copied using Copy-Item -ErrorAction Stop
+
+If a file is locked by another process:
+
+Skipped (in use): C:\Users\User\Documents\example.docx
+
+Other errors are logged but do not stop execution.
+
+🧪 Dry Run Mode
+
+If executed as:
+
+.\AutomaticBackupScript.ps1 -DryRun
+
+
+No files are copied. Instead, the script logs:
+
+DRYRUN: Would copy C:\Users\User\Desktop\file.txt → \\backup\JohnDoe_2025...
+
+This is essential for testing in production environments.
+
+📊 Progress Visualization
+
+The script uses two progress bars:
+
+[###########------] Overall backup progress
+    [#####-------] Current folder progress
+
+This mirrors the structure of enterprise-grade automation tools.
+
+📝 Logging System
+
+A detailed log file is created:
+
+BackupLog_<timestamp>.txt
+
+Contains:
+
+Start & end time
+User being backed up
+Destination path
+All file operations
+All errors or skipped items
+Cancellation events (Ctrl + C)
+
+Example Log Snippet:
+[2025-01-15 09:42:01] User profile: C:\Users\JohnDoe
+[2025-01-15 09:42:02] Queued 233 items from Documents
+[2025-01-15 09:42:10] Copied: C:\Users\JohnDoe\Documents\Report.xlsx
+[2025-01-15 09:43:55] Backup completed. Files: 188, Folders: 45
+
+📑 Report Generation (HTML + PDF)
+
+After the backup completes, the script builds:
+
+BackupReport_<timestamp>.html
+BackupReport_<timestamp>.pdf (if Microsoft Edge exists)
+
+The report includes:
+
+Device name
+Username
+Destination path
+Embedded full log
+
+Why Edge?
+Edge supports headless printing to PDF, enabling the script to generate PDFs without external dependencies.
+
+⚠ Error Handling & Safety Controls
+Built-in protections:
+
+Ctrl + C interception — logs cancellation without corrupting backup
+Network path validation — fallback to local storage
+Graceful handling of locked files
+Try/catch blocks across all critical operations
+All failures are written to the log and report.
+
+🧩 Parameters
+Parameter	Description
+-NetworkPath	Overrides the default backup share
+-DryRun	Simulates the backup without copying files
+
+Example:
+
+.\AutomaticBackupScript.ps1 -NetworkPath "\\server\TeamBackups\January"
+
+🏁 Output Structure
+JohnDoe_20250115_094233\
+│
+
+├── Desktop\
+
+├── Documents\
+
+├── Pictures\
+
+├── OneDrive\
+
+│
+
+├── BackupLog_20250115_094233.txt
+
+└── BackupReport_20250115_094233.pdf
+
+🧱 Limitations
+
+Cannot back up files owned by SYSTEM-only permissions
+Very large profiles will take time to enumerate
+PDF generation requires Microsoft Edge
+
+🚀 Future Enhancements (Optional Roadmap)
+
+Parallelized copying for faster backups
+Incremental backup mode
+Email notification system
+Intune deployment arguments
+GUI wrapper for technicians
+
+✔ Summary
+
+AutomaticBackupScript.ps1 is a reliable, safe, and production-ready tool for user data extraction during IT workflows such as offboarding, device rotation, and troubleshooting.
+
+It demonstrates solid automation engineering practices:
+
+defensive programming
+structured logging
+resilient error handling
+reporting
+parameterization
+cross-environment compatibility
