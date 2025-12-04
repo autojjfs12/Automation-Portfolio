@@ -31,10 +31,12 @@ Customize the backup location:
 📁 Output Example
 Backup_JohnDoe_20250101_153022\
 │
+
 ├── Desktop\
 ├── Documents\
 ├── Pictures\
 ├── OneDrive\
+
 │
 
 ├── BackupLog_20250101_153022.txt
