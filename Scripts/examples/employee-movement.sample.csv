@@ -1,0 +1,2 @@
+UserPrincipalName,Department,Title,Office,TargetOU
+alex.taylor@example.com,Operations,Systems Analyst,San Juan,"OU=Operations,OU=Users,DC=example,DC=com"
